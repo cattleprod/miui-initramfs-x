@@ -2,6 +2,7 @@ on boot
     setprop ro.build.product smdkv310
     setprop ro.product.device smdkv310
     setprop ro.radio.noril yes
+    setprop ro.telephony.call_ring.multiple 0
 
 # fake some battery state
     setprop status.battery.state Slow
