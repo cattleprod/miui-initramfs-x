@@ -1,4 +1,6 @@
 on early-init
+    write /default.prop ro.secure=0
+    setprop ro.secure=0
     start ueventd
 
 on init
@@ -8,13 +10,9 @@ on init
     export ANDROID_DATA /data
     export EXTERNAL_STORAGE /sdcard
 
-    # original
-    # symlink /system/etc /etc
-    # for clockworkmod
-    # symlink /misc /etc
+    symlink /lib/misc /etc
 
     mkdir /sdcard
-    mkdir /emmc
     mkdir /sdcard1
     mkdir /preload
     mkdir /system
@@ -40,10 +38,10 @@ on early-fs
     mkdir /mnt/.lfs 0755 root root
 
 
+
 on fs
     mount tmpfs tmpfs /tmp mode=0755    
-    mount ext4 /dev/block/mmcblk0p9 /system wait rw
-    mount ext4 /dev/block/mmcblk0p7 /cache nosuid nodev noatime wait
+    mount ext4 /dev/block/mmcblk0p9 /system wait
 
     # SEC_DMCRYPT move mounting efs befor apply_disk_policy, and set group id to system
     mkdir /efs
@@ -59,7 +57,7 @@ on post-fs
 
     #temp
     chmod 750 /sbin/fat.format
-#    mount rootfs rootfs / ro remount
+    mount rootfs rootfs / ro remount
 
     write /proc/sys/kernel/panic_on_oops 1
     write /proc/sys/kernel/hung_task_timeout_secs 0
@@ -72,32 +70,28 @@ on post-fs
     insmod /lib/modules/j4fs.ko
     mount j4fs /dev/block/mmcblk0p4 /mnt/.lfs
 
-    # let recovery handle mounting /system
-    umount /system
-
 on boot
 
     ifup lo
     hostname localhost
     domainname localdomain
 
+    start hcrecovery
+
     class_start default
 
 service ueventd /sbin/ueventd
     critical
 
-
-service console /sbin/sh
+service console /sbin/busybox sh
     console
 
-service recovery /sbin/recovery.sh
-    oneshot
+service recovery /sbin/recovery
 
-service adbd /sbin/adbd recovery
-    disabled
+service adbd /sbin/adbd
 
 on property:persist.service.adb.enable=1
     start adbd
 
 on property:persist.service.adb.enable=0
-    stop adbd
+    start adbd
